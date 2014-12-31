@@ -5,10 +5,26 @@ var url = require('url');
 var bl = require('bl');
 var uuid = require('node-uuid');
 var redis = require('redis');
+var luhn = require('luhn').luhn;
+var ZSchema = require('z-schema');
 
 
 var PORT = 8081;
-var client = redis.createClient();
+var redis_client = redis.createClient();
+
+//ZSchema.registerFormat("credit-card", luhn.validate);
+var validator = new ZSchema();
+
+
+/**
+ * Removes any hyphens from the credit card number
+ * 
+ * @param {string} card - credit card number with / without hyphens
+ * @returns {string} clean_card - creditcard number without hyphens (only digits)
+ */
+function format_card(card) { 
+    return card.replace(/-/g,"");
+}
 
 /**
  * Stores a credit card in our database.
@@ -18,9 +34,14 @@ var client = redis.createClient();
  */
 function store_card(card) {
 
+    if (!luhn.validate(card)) {
+        console.error("bad credit card number:", card);
+        return "bad credit card number: " + card;
+    }
+
     //TODO: check if already exists
     var token = uuid.v4();
-    client.set(token, card);
+    redis_client.set(token, card);
 
     return token;
 
@@ -42,24 +63,38 @@ var server = http.createServer(function (request, response) {
             if (uri == "/creditcard") {
 
                 // Extract card number from data and create response
-                var card;
                 request.pipe(bl(function(err, data) {
                     if (err) {
                         console.error("error reading request data");
                     } else {
-                        card = JSON.parse(data.toString())["credit-card"];
+                        
+                        var json = JSON.parse(data.toString());
+                        var json_schema = {
+                                properties: {
+                                    "credit-card": { type: "string" }
+                                },
+                                required: ["credit-card"]
+                        };
 
-                        // Save card and respond with token
-                        response.end(JSON.stringify({
-                        "token" : store_card(card),
-                        }));
+                        // Make sure the JSON schema is valid
+                        if (validator.validate(json, json_schema)) {
+
+                            // Save card and respond with token
+                            response.end(JSON.stringify({
+                            "token" : store_card(format_card(json["credit-card"])),
+                            }));
+
+                        } else {
+                            console.error("invalid input JSON:", data.toString());
+                            response.end("invalid input JSON: " + data.toString() + "\n");
+                        }
                     }
                 }));
 
             // Bad URI
             } else {
                 console.error("bad uri: '", uri, "'");
-                response.end();
+                response.end("bad uri: '" + uri + "'\n");
             }
             break;
 
@@ -72,7 +107,7 @@ var server = http.createServer(function (request, response) {
                 var token = uri_regex[1];
 
                 // Find card number and respond with credit card number
-                client.get(token, function(err, reply) {
+                redis_client.get(token, function(err, reply) {
                     if (err) {
                         console.log("redis error:", err);
                     } else {
@@ -85,13 +120,13 @@ var server = http.createServer(function (request, response) {
             // Bad URI
             } else {
                 console.error("bad uri: '", uri, "'");
-                response.end();
+                response.end("bad uri: '" + uri + "'\n");
             }
             break;
 
         default:
             console.error("unable to handle request method '", request.method, "'");
-            response.end();
+            response.end("unable to handle request method '" + request.method + "'\n");
     }
 
 });
