@@ -1,12 +1,14 @@
-
+#!/usr/bin/nodejs
 
 var http = require('http');
 var url = require('url');
 var bl = require('bl');
 var uuid = require('node-uuid');
+var redis = require('redis');
+
 
 var PORT = 8081;
-var credit_cards = {};
+var client = redis.createClient();
 
 /**
  * Stores a credit card in our database.
@@ -18,23 +20,10 @@ function store_card(card) {
 
     //TODO: check if already exists
     var token = uuid.v4();
-    credit_cards[token] = card;
+    client.set(token, card);
 
     return token;
 
-}
-
-/**
- * Stores a credit card in our database.
- * 
- * @param {string} token - the credit card's token
- * @returns {string} card - the credit card number that matches this token
- */
-function get_card(token) {
-
-    //TODO: Handle errors
-    return credit_cards[token];
-    
 }
 
 /**
@@ -83,10 +72,16 @@ var server = http.createServer(function (request, response) {
                 var token = uri_regex[1];
 
                 // Find card number and respond with credit card number
-                response.end(JSON.stringify({
-                "credit-card" : get_card(token),
-                }));
-
+                client.get(token, function(err, reply) {
+                    if (err) {
+                        console.log("redis error:", err);
+                    } else {
+                        response.end(JSON.stringify({
+                        "credit-card" : reply,
+                        }));
+                    }
+                });
+                
             // Bad URI
             } else {
                 console.error("bad uri: '", uri, "'");
