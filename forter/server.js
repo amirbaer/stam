@@ -27,27 +27,6 @@ function format_card(card) {
 }
 
 /**
- * Stores a credit card in our database.
- * 
- * @param {string} card - credit card number
- * @returns {string} token - unique ID that represents the credit card token
- */
-function store_card(card) {
-
-    if (!luhn.validate(card)) {
-        console.error("bad credit card number:", card);
-        return "bad credit card number: " + card;
-    }
-
-    //TODO: check if already exists
-    var token = uuid.v4();
-    redis_client.set(token, card);
-
-    return token;
-
-}
-
-/**
  * Main server logic - handle POST and GET requests
  */
 var server = http.createServer(function (request, response) {
@@ -68,7 +47,15 @@ var server = http.createServer(function (request, response) {
                         console.error("error reading request data");
                     } else {
                         
-                        var json = JSON.parse(data.toString());
+                        // Try to parse JSON
+                        try {
+                            var json = JSON.parse(data.toString());
+                        // Error parsing JSON
+                        } catch(err) {
+                            console.error("ERROR:", err.message);
+                            response.end("error parsing JSON: " + err.message + "\n");
+                            return;
+                        }
                         var json_schema = {
                                 properties: {
                                     "credit-card": { type: "string" }
@@ -79,9 +66,23 @@ var server = http.createServer(function (request, response) {
                         // Make sure the JSON schema is valid
                         if (validator.validate(json, json_schema)) {
 
+                            var card = format_card(json["credit-card"]);
+
+                            // Validate card number
+                            if (!luhn.validate(card)) {
+                                console.error("bad credit card number:", card);
+                                response.end("bad credit card number: " + card + "\n");
+                                return;
+                            }
+
+                            //TODO: check if already exists
+                            // Generate token and save to database
+                            var token = uuid.v4();
+                            redis_client.set(token, card);
+
                             // Save card and respond with token
                             response.end(JSON.stringify({
-                            "token" : store_card(format_card(json["credit-card"])),
+                            "token" : token,
                             }));
 
                         } else {
