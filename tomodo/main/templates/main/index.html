@@ -1,0 +1,22 @@
+
+<h1> Add Artist</h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+<form action="{% url 'main:add_artist' %}" method="post">
+    {% csrf_token %}
+    <label for="artist_name">Artist:</label>
+    <input type="text" name="artist_name" />
+    <input type="submit" value="Add" />
+</form>
+
+<!--{% if artists %}
+    <ul>
+    {% for artist in artists %}
+        <li><a href="/artist/{{ artist.id }}">{{ artist.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No artists are available.</p>
+{% endif %}
+-->
