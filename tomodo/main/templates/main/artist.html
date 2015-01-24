@@ -1,13 +1,37 @@
-{% if albums %}
-    <table>
-    {% for album in albums %}
-        <tr>
-            <td>{{ album.name }}</td>
-            <td><img src="{{ album.image_url }}"/></td>
-        </tr>
-    {% endfor %}
-    </table>
-{% else %}
-    <p>No albums are available.</p>
-{% endif %}
+<title> Tomodo Project </title>
+
+<table>
+    <tr>
+        <td style="vertical-align:top;">
+            <div style="width:15em;">
+            {% if artists %}
+                <h1> Artists </h1>
+                {% for artist in artists %}
+                    <a href="/artist/{{ artist.id }}">{{ artist.name }}</a><br>
+                {% endfor %}
+            {% else %}
+                <p>No artists are available.</p>
+            {% endif %}
+
+            </div>
+        </td>
+        <td>
+            <div>
+                {% if albums %}
+                    <h2> {{ albums.0.artist.name }} </h2>
+                    <table>
+                    {% for album in albums %}
+                        <tr>
+                            <td>{{ album.name }}</td>
+                            <td><img src="{{ album.image_url }}"/></td>
+                        </tr>
+                    {% endfor %}
+                    </table>
+                {% else %}
+                    <p>No albums are available.</p>
+                {% endif %}
+            </div>
+        </td>
+    </tr>
+</table>
 
