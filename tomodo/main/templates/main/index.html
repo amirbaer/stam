@@ -1,8 +1,11 @@
-<title> Tomodo Project </title>
+
+{% extends "main/top_banner.html" %}
+
+{% block content %}
 
 <h1> Add Artist</h1>
 
-{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+{% if message %}<p><strong>{{ message }}</strong></p>{% endif %}
 
 <form action="{% url 'main:add_artist' %}" method="post">
     {% csrf_token %}
@@ -10,4 +13,6 @@
     <input type="text" name="artist_name" />
     <input type="submit" value="Add" />
 </form>
+
+{% endblock %}
 

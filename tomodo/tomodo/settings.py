@@ -93,3 +93,8 @@ import warnings
 import exceptions
 warnings.filterwarnings("ignore", category=exceptions.RuntimeWarning, module='django.db.backends.sqlite3.base', lineno=63)
 
+
+TEMPLATE_CONTEXT_PROCESSORS = [
+    'django.contrib.messages.context_processors.messages',
+]
+
