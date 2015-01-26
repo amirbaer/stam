@@ -1,0 +1,21 @@
+
+https://api.instagram.com/oauth/authorize/?client_id=cc6b46a2076d40f49dd4e578bd666f6e&redirect_uri=http://amirbaer.github.io/instagram/auth&response_type=code
+
+http://amirbaer.github.io/instagram/auth?code=d331727d4ffe48a196056042d699012d
+
+curl -F 'client_id=cc6b46a2076d40f49dd4e578bd666f6e' -F 'client_secret=d1a11ed363954acf90c6850538c156be' -F 'grant_type=authorization_code' -F 'redirect_uri=http://amirbaer.github.io/instagram/auth' -F 'code=7d10e350952d4280bcff1acaf88f749f' https://api.instagram.com/oauth/access_token
+
+https://api.instagram.com/v1/tags/70?access_token=35892001.1fb234f.8b70e77d92a3472aa9a54d5412154558
+
+
+URLA = 'https://api.instagram.com/v1/tags/%s?access_token=35892001.1fb234f.8b70e77d92a3472aa9a54d5412154558'
+URLB = 'https://api.instagram.com/v1/tags/%s?access_token=35892001.cc6b46a.7f79dc1a5b9344f89db256b31e73e278'
+
+for i in xrange(14986,20001):
+    ans = json.load(urllib2.urlopen(URLB % i))
+    print i
+    res[i] = ans
+    if not ans.has_key('meta') or not ans['meta'].has_key('code') or ans['meta']['code'] != 200:
+        print "i'm out"
+        break
+
